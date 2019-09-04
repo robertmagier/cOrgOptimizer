@@ -1,4 +1,4 @@
-const DaiTestExchange = require('./daiTestExchange')
+const DaiTestExchange = require('./lib/daiTestExchange')
 const Web3 = require('web3')
 
 const provider_wss = 'wss://mainnet.infura.io/ws/v3/1083bd1be8444957a770056562d20ded'

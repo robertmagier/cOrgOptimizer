@@ -1,10 +1,10 @@
 var exchangeABI = require('./uniswapABI')
 const tokenABI = require('./tokenABI')
 const { tokens, protocols } = require("hardlydifficult-test-helpers");
-const UniswapBroker = require('./uniswapBroker.js')
-const promisify = require('./promisify')
-const FairBroker = require('./fairBroker')
-const DaiTestExchange = require('./daiTestExchange')
+const UniswapBroker = require('./lib/uniswapBroker.js/index.js')
+const promisify = require('./lib/promisify')
+const FairBroker = require('./lib/fairBroker')
+const DaiTestExchange = require('./lib/daiTestExchange')
 
 const BN = require('bignumber.js')
 
