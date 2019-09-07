@@ -4,13 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nodejs test.js "
+    "test": "mocha --exit"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bignumber.js": "^9.0.0",
+    "c-org-abi": "^1.0.1",
+    "chai": "^4.2.0",
     "hardlydifficult-test-helpers": "^0.3.0",
+    "mocha": "^6.2.0",
     "web3": "^1.2.1"
   }
 }
