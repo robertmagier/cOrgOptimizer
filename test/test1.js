@@ -8,6 +8,7 @@ const CorgTestDeployer = require('../lib/corgTestDeployer')
 const UniswapTestDeployer = require('../lib/uniswapTestDeployer')
 const DaiTestDeployer = require('../lib/daiTestDeployer.js')
 const UniswapPair = require('../lib/UniswapPair.js')
+const BN = require('bignumber.js')
 
 const FairBroker = require('../lib/fairBroker.js')
 
@@ -28,7 +29,7 @@ var dai = new DaiTestDeployer(web3_local)
 
 var fairBuyer, corgOwner, uniswapOwner,daiOwner, daiBuyer,uniswapDaiBuyer, uniswapFairBuyer
 var daiExchange, fairExchange,uniswapPair,fairBroker
-
+var targetToken,simulatedPrices
 
 async function getAccounts(web3) {
     let accounts = await promisify(cb=>web3.eth.getAccounts(cb))
@@ -59,11 +60,11 @@ describe('C-Org Test Deployer', async function(done) {
             expect(balance.toString()).to.be.equal('0');
     });
 
-        it('Should be possible to buy tokens for 1 000 000 wei', async function() {
+        it('Should be possible to buy tokens for 1000000000000000000000 wei', async function() {
             await expect(corg.approveBuyer(fairBuyer)).to.be.eventually.fulfilled
-            await expect(corg.buy(fairBuyer,10000000000),"Could not buy tokens").to.be.eventually.fulfilled 
+            await expect(corg.buy(fairBuyer,"1000000000000000000000"),"Could not buy tokens").to.be.eventually.fulfilled 
             let balance = await corg.balanceOf(fairBuyer)
-            expect(balance.toString()).to.be.equal('23800000000')
+            expect(balance.toString()).to.be.equal('407181477801500000000')
                                                     
     });
 
@@ -73,6 +74,14 @@ describe('C-Org Test Deployer', async function(done) {
             await expect(dai.mint(daiBuyer,10000000000)).to.be.eventually.fulfilled
             balance = await dai.balanceOf(daiBuyer)
             expect(balance.toString()).to.be.equal('10000000000')
+                                                    
+    });
+        it('Should be possible to mint 2715167495 tokens to uniswapDaiBuyer', async function() {
+            let balance = await dai.balanceOf(uniswapDaiBuyer)
+            expect(balance.toString()).to.be.equal('0')
+            await expect(dai.mint(uniswapDaiBuyer,2715167495)).to.be.eventually.fulfilled
+            balance = await dai.balanceOf(uniswapDaiBuyer)
+            expect(balance.toString()).to.be.equal('2715167495')
                                                     
     });
 
@@ -120,46 +129,51 @@ describe('C-Org Test Deployer', async function(done) {
             uniswapPair = new UniswapPair(web3_local,daiExchange.address,fairExchange.address)
             await uniswapPair.initialize()
             let prices = await uniswapPair.getPrices()
-            console.log(prices[0].toString())
-            console.log(prices[1].toString())
-            console.log(prices[2].toString())
+            console.log('Dai Price:', prices[0].toString())
+            console.log('Fair Price:', prices[1].toString())
+            console.log('Total Price:', prices[2].toString())
         })
 
         it('Should be possible to calculate Fair Price', async function(){
             fairBroker = new FairBroker(web3_local,corg.datAddress)
             await fairBroker.initialize()
             let price = await fairBroker.calculateFairBuyPrice()
+
             console.log('Fair Price:', price.toString())
             let uniswapPrices = await uniswapPair.getPrices()
             console.log('Uniswap Total Price: ',uniswapPrices[2].toString())
-
-            let targetToken = await uniswapPair.getUniswapTargetToken(price.toString())
+            price = new BN(1).div(price)
+            targetToken = await uniswapPair.getUniswapTargetToken(price.toString())
             console.log('Target Token:', targetToken.toString())
+           
+            await expect(dai.mint(uniswapDaiBuyer,targetToken.integerValue().toString())).to.be.eventually.fulfilled
+
+
         })
 
+        // it('Should be possible to buy tokens from DAI exchange', async function(){
+        //     let current_block = await web3_local.eth.getBlock(await web3_local.eth.getBlockNumber());
+        //     await daiExchange.ethToTokenSwapOutput(100,current_block.timestamp + 300,{value:1000,from:uniswapDaiBuyer})
+        //     let balance = await dai.balanceOf(uniswapDaiBuyer)
+        //     expect(balance.toString()).to.be.equal('100')
+        // })
 
-        it('Should be possible to buy tokens from DAI exchange', async function(){
-            let current_block = await web3_local.eth.getBlock(await web3_local.eth.getBlockNumber());
-            await daiExchange.ethToTokenSwapOutput(100,current_block.timestamp + 300,{value:1000,from:uniswapDaiBuyer})
-            let balance = await dai.balanceOf(uniswapDaiBuyer)
-            expect(balance.toString()).to.be.equal('100')
-        })
 
-
-        it('Should be possible to buy tokens from FAIR exchange', async function(){
-            await corg.approveBuyer(uniswapFairBuyer)
-            let current_block = await web3_local.eth.getBlock(await web3_local.eth.getBlockNumber());
-            await fairExchange.ethToTokenSwapOutput(100,current_block.timestamp + 300,{value:10000,from:uniswapFairBuyer})
-            let balance = await corg.balanceOf(uniswapFairBuyer)
-            expect(balance.toString()).to.be.equal('100')
-        })
+        // it('Should be possible to buy tokens from FAIR exchange', async function(){
+        //     await corg.approveBuyer(uniswapFairBuyer)
+        //     let current_block = await web3_local.eth.getBlock(await web3_local.eth.getBlockNumber());
+        //     await fairExchange.ethToTokenSwapOutput(100,current_block.timestamp + 300,{value:10000,from:uniswapFairBuyer})
+        //     let balance = await corg.balanceOf(uniswapFairBuyer)
+        //     expect(balance.toString()).to.be.equal('100')
+        // })
         
         it('Should be possible to buy tokens from FAIR exchange paying in DAI', async function(){
             await corg.approveBuyer(uniswapDaiBuyer)
+            await corg.approveBuyer(uniswapFairBuyer)
             let current_block = await web3_local.eth.getBlock(await web3_local.eth.getBlockNumber());
-            await expect(dai.approve(uniswapDaiBuyer,daiExchange.address,100)).to.be.eventually.fulfilled
-
-            await daiExchange.tokenToTokenSwapInput(100,1,1,current_block.timestamp + 300,corg.tokenAddress,{from:uniswapDaiBuyer})
+            await expect(dai.approve(uniswapDaiBuyer,daiExchange.address,targetToken.integerValue().toString())).to.be.eventually.fulfilled
+            simulatedPrices = await uniswapPair.simulatePrices(targetToken.integerValue().toString())
+            await daiExchange.tokenToTokenSwapInput(targetToken.integerValue().toString(),1,1,current_block.timestamp + 300,corg.tokenAddress,{from:uniswapDaiBuyer})
             let balance = await corg.balanceOf(uniswapDaiBuyer)
             expect(balance.toString()).to.be.equal('98')
         })
@@ -169,91 +183,14 @@ describe('C-Org Test Deployer', async function(done) {
             console.log('Fair Price:', price.toString())
 
             let uniswapPrices = await uniswapPair.getPrices()
-            console.log('Uniswap Total Price: ',uniswapPrices[2].toString())
+            console.log('Uniswap Total Price:    ',uniswapPrices[2].toString())
+            let simulated = simulatedPrices[2]
+            console.log('Simulated Uniswap Price:',simulated.toString())
 
+            price = new BN(1).div(price)
             let targetToken = await uniswapPair.getUniswapTargetToken(price.toString())
             console.log('Target Token:', targetToken.toString())
         })
 
-        it('Should be possible to mint extra tokens to uniswapDaiBuyer to he can buy Fair Tokens', async function (){
-            await dai.mint(uniswapDaiBuyer,2715167371)
-            let balance = await dai.balanceOf(uniswapDaiBuyer)
-            console.log('New UniswapDaiBuyer Balance: ',balance.toString())
-        })
-
-        it('Should be possible to buy tokens from FAIR exchange paying in DAI', async function(){
-            await corg.approveBuyer(uniswapDaiBuyer)
-            let current_block = await web3_local.eth.getBlock(await web3_local.eth.getBlockNumber());
-            await expect(dai.approve(uniswapDaiBuyer,daiExchange.address,2715167371)).to.be.eventually.fulfilled
-
-            await daiExchange.tokenToTokenSwapInput(2715167371,1,1,current_block.timestamp + 300,corg.tokenAddress,{from:uniswapDaiBuyer})
-            let balance = await corg.balanceOf(uniswapDaiBuyer)
-            expect(balance.toString()).to.be.equal('1751859277')
-        })
-
-        it('Should be possible to calculate Fair Price', async function(){
-            let price = await fairBroker.calculateFairBuyPrice()
-            console.log('Fair Price:', price.toString())
-
-            let uniswapPrices = await uniswapPair.getPrices()
-            console.log('Uniswap Total Price: ',uniswapPrices[2].toString())
-
-            let targetToken = await uniswapPair.getUniswapTargetToken(price.toString())
-            console.log('Target Token:', targetToken.toString())
-        })
-
-        it('Should be possible to mint extra tokens to uniswapDaiBuyer to he can buy Fair Tokens', async function (){
-            await dai.mint(uniswapDaiBuyer,7711391)
-            let balance = await dai.balanceOf(uniswapDaiBuyer)
-            console.log('New UniswapDaiBuyer Balance: ',balance.toString())
-        })
-
-        it('Should be possible to buy tokens from FAIR exchange paying in DAI', async function(){
-            await corg.approveBuyer(uniswapDaiBuyer)
-            let current_block = await web3_local.eth.getBlock(await web3_local.eth.getBlockNumber());
-            await expect(dai.approve(uniswapDaiBuyer,daiExchange.address,7711391)).to.be.eventually.fulfilled
-
-            await daiExchange.tokenToTokenSwapInput(7711391,1,1,current_block.timestamp + 300,corg.tokenAddress,{from:uniswapDaiBuyer})
-            let balance = await corg.balanceOf(uniswapDaiBuyer)
-            
-        })
-
-        it('Should be possible to calculate Fair Price', async function(){
-            let price = await fairBroker.calculateFairBuyPrice()
-            console.log('Fair Price:', price.toString())
-
-            let uniswapPrices = await uniswapPair.getPrices()
-            console.log('Uniswap Total Price: ',uniswapPrices[2].toString())
-
-            let targetToken = await uniswapPair.getUniswapTargetToken(price.toString())
-            console.log('Target Token:', targetToken.toString())
-        })
-
-        it('Should be possible to mint extra tokens to uniswapDaiBuyer to he can buy Fair Tokens', async function (){
-            await dai.mint(uniswapDaiBuyer,20654)
-            let balance = await dai.balanceOf(uniswapDaiBuyer)
-            console.log('New UniswapDaiBuyer Balance: ',balance.toString())
-        })
-
-        it('Should be possible to buy tokens from FAIR exchange paying in DAI', async function(){
-            await corg.approveBuyer(uniswapDaiBuyer)
-            let current_block = await web3_local.eth.getBlock(await web3_local.eth.getBlockNumber());
-            await expect(dai.approve(uniswapDaiBuyer,daiExchange.address,20654)).to.be.eventually.fulfilled
-
-            await daiExchange.tokenToTokenSwapInput(20654,1,1,current_block.timestamp + 300,corg.tokenAddress,{from:uniswapDaiBuyer})
-            let balance = await corg.balanceOf(uniswapDaiBuyer)
-            
-        })
-
-        it('Should be possible to calculate Fair Price', async function(){
-            let price = await fairBroker.calculateFairBuyPrice()
-            console.log('Fair Price:', price.toString())
-
-            let uniswapPrices = await uniswapPair.getPrices()
-            console.log('Uniswap Total Price: ',uniswapPrices[2].toString())
-
-            let targetToken = await uniswapPair.getUniswapTargetToken(price.toString())
-            console.log('Target Token:', targetToken.toString())
-        })
-
+   
 });
