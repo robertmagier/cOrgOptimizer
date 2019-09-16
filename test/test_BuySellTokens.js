@@ -38,6 +38,11 @@ describe('C-Org Test Deployer', async function(done) {
 
         it('Calculate Fair Price', async function() {
 
+            console.log('Dai Exchange:  ',testDeployer.daiExchange.address)
+            console.log('Fair Exchange: ',testDeployer.fairExchange.address)
+            console.log('DAT:           ',testDeployer.corg.datAddress)
+            
+
             optimizer = new Optimizer(web3_local,testDeployer.daiExchange.address,testDeployer.fairExchange.address,testDeployer.corg.datAddress)
             let result = await optimizer.optimizeBuyTransaction('11083071190')
             console.log('Result of Optimization: ', result)

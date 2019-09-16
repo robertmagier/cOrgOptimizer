@@ -1,9 +1,3 @@
-# cOrgOptimizer
-C-Org-Optimizer
-
-
-## This is the example code how to use this module:
-```javascript
 const Optimizer = require('corgoptimizer')
 const Web3 = require('web3')
 const provider_http = 'http://localhost:8545'
@@ -31,8 +25,5 @@ async function main()
 }
 
 main()
-```
-
-
 
 
