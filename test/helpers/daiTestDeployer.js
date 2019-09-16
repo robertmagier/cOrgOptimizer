@@ -1,5 +1,4 @@
 const { tokens, protocols } = require("hardlydifficult-test-helpers");
-const promisify = require('./promisify')
 
 class DaiTestDeployer{
     constructor(web3)

@@ -1,6 +1,6 @@
 const { tokens, protocols } = require("hardlydifficult-test-helpers");
-const promisify = require('./promisify')
-const fairABI = require('../abi/fairABI.js')
+// const promisify = require('../../src/promisify')
+const fairABI = require('../../abi/fairABI.js')
 
 class CorgTestDeployer{
     constructor(web3)

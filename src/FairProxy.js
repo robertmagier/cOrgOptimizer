@@ -6,7 +6,7 @@ const promisify = require('./promisify')
 
 
 
-class FairBroker {
+class FairProxy {
     constructor(web3,datAddress) {
         this.web3 = web3
         this.datAddress = datAddress
@@ -38,15 +38,25 @@ class FairBroker {
     {
         let tokens = await this.getFairTotalSoldTokens()
         let buySlope = await this.getBuySlope()
-        let fairPrice = new BN(tokens.available)
-        fairPrice = fairPrice.plus(tokens.burned).times(buySlope.num).div(buySlope.den)
-        return fairPrice
+        let fairBuyPrice = new BN(tokens.available)
+        fairBuyPrice = fairBuyPrice.plus(tokens.burned).times(buySlope.num).div(buySlope.den)
+        return fairBuyPrice
+    }
+    async calculateFairSellPrice()
+    {
+        let sellSlope = await this.getSellSlope()
+        return sellSlope
     }
 
     async getBuySlope() {
         let den = await promisify(cb=>this.dat.methods.buySlopeDen().call(cb))
         let num = await promisify(cb=>this.dat.methods.buySlopeNum().call(cb))
         return {num:num,den:den}
+    }
+
+    async getSellSlope() {
+        let sellPrice = await promisify(cb=>this.dat.methods.estimateSellValue(10).call(cb))
+        return new BN(sellPrice).div(10)
     }
 
     async allowance(from,spender) {
@@ -63,4 +73,4 @@ class FairBroker {
 
 }
 
-module.exports = FairBroker
+module.exports = FairProxy

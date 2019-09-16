@@ -6,16 +6,16 @@ expect = chai.expect
 
 const BN = require('bignumber.js')
 
-const TestDeployer = require('../lib/testDeployer.js')
-const FairBroker = require('../lib/fairBroker.js')
-const UniswapPair = require('../lib/UniswapPair.js')
+const TestDeployer = require('./helpers/testDeployer.js')
+const FairBroker = require('../src/FairProxy.js')
+const UniswapPair = require('../src/UniswapPair.js')
 
 const Web3 = require('web3')
-const promisify = require('../lib/promisify')
+const promisify = require('../src/promisify')
 
 const provider_wss = 'wss://mainnet.infura.io/ws/v3/1083bd1be8444957a770056562d20ded'
 const provider_http = 'http://localhost:8545'
-
+const Optimizer = require('../src/CorgOptimizer')
 
 var web3 = new Web3(new Web3.providers.WebsocketProvider(provider_wss))
 var web3_local = new Web3(new Web3.providers.HttpProvider(provider_http))
@@ -44,7 +44,6 @@ describe('C-Org Test Deployer', async function(done) {
             console.log('Fair Price:', price.toString())
             targetPrice = new BN(1).div(price)
         });
-   
 
         it('Calculate Uniswap Price', async function() {
 
@@ -64,7 +63,7 @@ describe('C-Org Test Deployer', async function(done) {
         it('Execute Swap and check differnce.', async function(){
             let target = targetToken.integerValue().toString()
             let simulatedPrices = await uniswapPair.simulatePrices(target)
-            await testDeployer.swapTokens(target)
+            await testDeployer.buyFairTokens(target)
             let prices = await uniswapPair.getPrices()
             console.log('Dai Price:', prices[0].toString())
             console.log('Fair Price:', prices[1].toString())

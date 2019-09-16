@@ -4,16 +4,16 @@ var chaiAsPromised = require('chai-as-promised')
 chai.use(chaiAsPromised)
 expect = chai.expect
 
-const CorgTestDeployer = require('../lib/corgTestDeployer')
-const UniswapTestDeployer = require('../lib/uniswapTestDeployer')
-const DaiTestDeployer = require('../lib/daiTestDeployer.js')
-const UniswapPair = require('../lib/UniswapPair.js')
+const CorgTestDeployer = require('./helpers/corgTestDeployer')
+const UniswapTestDeployer = require('./helpers/uniswapTestDeployer')
+const DaiTestDeployer = require('./helpers/daiTestDeployer.js')
+const UniswapPair = require('../src/UniswapPair.js')
 const BN = require('bignumber.js')
 
-const FairBroker = require('../lib/fairBroker.js')
+const FairBroker = require('../src/FairProxy.js')
 
 const Web3 = require('web3')
-const promisify = require('../lib/promisify')
+const promisify = require('../src/promisify')
 
 const provider_wss = 'wss://mainnet.infura.io/ws/v3/1083bd1be8444957a770056562d20ded'
 const provider_http = 'http://localhost:8545'

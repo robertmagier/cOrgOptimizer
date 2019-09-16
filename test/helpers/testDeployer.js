@@ -1,8 +1,8 @@
-const CorgTestDeployer = require('../lib/corgTestDeployer')
-const UniswapTestDeployer = require('../lib/uniswapTestDeployer')
-const DaiTestDeployer = require('../lib/daiTestDeployer.js')
+const CorgTestDeployer = require('./corgTestDeployer')
+const UniswapTestDeployer = require('./uniswapTestDeployer')
+const DaiTestDeployer = require('./daiTestDeployer.js')
 const BN = require('bignumber.js')
-const promisify = require('../lib/promisify')
+const promisify = require('../../src/promisify')
 
 var chai = require('chai')
 var chaiAsPromised = require('chai-as-promised')
@@ -112,7 +112,7 @@ class TestDeployer {
 
     }
 
-    async swapTokens(daiAmount) 
+    async buyFairTokens(daiAmount) 
     {
         if(!this.prepared)
         {
@@ -126,6 +126,23 @@ class TestDeployer {
 
         let current_block = await this.web3.eth.getBlock(await this.web3.eth.getBlockNumber());
         await this.daiExchange.tokenToTokenSwapInput(daiAmount,1,1,current_block.timestamp + 300,this.corg.tokenAddress,{from:this.uniswapDaiBuyer})
+
+    }
+
+    async sellFairTokens(fairAmount) 
+    {
+        if(!this.prepared)
+        {
+            throw("First you have to prepare your testing environment")
+        }
+        let fairBalance = await this.corg.balanceOf(this.fairBuyer)
+        fairBalance = new BN(fairBalance)
+        expect(fairBalance.gt(fairAmount),"Not enought tokens to execute sell transaction.").to.be.true
+        console.log('Fair Balance: ', new BN(fairBalance).toFormat())
+        await this.corg.approve(this.fairBuyer,this.fairExchange.address,fairAmount)
+
+        let current_block = await this.web3.eth.getBlock(await this.web3.eth.getBlockNumber());
+        await this.fairExchange.tokenToTokenSwapInput(fairAmount,1,1,current_block.timestamp + 300,this.dai.tokenAddress,{from:this.fairBuyer})
 
     }
 
