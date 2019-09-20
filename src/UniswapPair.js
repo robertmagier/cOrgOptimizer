@@ -127,34 +127,41 @@ class UniswapPair {
 
     }
 
-    async getUniswapTargetToken(targetPrice,debug) {
+    async getUniswapTargetToken(ifBuy,targetPrice) {
 
         await this._syncData()
-        let pm = new BN(targetPrice) //Expect price in ters of FAIR/DAI. C-org calculates price as DAI/FAIR
-        let y1 = new BN(this.token1Balance)
-        let y2 = new BN(this.token2Balance)
-        let x1 = new BN(this.exchange1WeiBalance)
-        let x2 = new BN(this.exchange2WeiBalance)
+        let pm = new BN(targetPrice) //Sell is using inverted price comparing to buy.
+        if(ifBuy) {
+            pm = new BN(1).div(targetPrice) //Expect price in ters of FAIR/DAI. C-org calculates price as DAI/FAIR
+        }
+
+        let params = this._getFormulaInputs(ifBuy)
         let targetToken = new BN(0)
        
        // target Wei = (sqrt((x1*y1* x2 *y2)/pm) + (x1 * y1))/(x1+x2)
        
-       let mul_x1y1_x2_y2 = new BN(x1.times(y1).times(x2.times(y2)).toFixed(0))
+       let mul_x1y1_x2_y2 = new BN(params.x1.times(params.y1).times(params.x2.times(params.y2)).toFixed(0))
        targetToken = new BN(mul_x1y1_x2_y2.div(pm).toFixed(0))
        targetToken = new BN(targetToken.sqrt().toFixed(0))
-       targetToken = new BN(targetToken.plus(x1.times(y1)).div(x1.plus(x2)).toFixed(0))
-       
-       if(debug) {
-           console.log('Target Token y1_end:  ', targetToken.toString(), "Target Price TOKEN2/TOKEN1: ",pm.toString())
-           console.log('You can spend ',targetToken.minus(y1).toString(),' tokens.')
-           console.log('y1: ', y1.toString())
-           console.log('y2: ', y2.toString())
-           console.log('x1: ', x1.toString())
-           console.log('x2: ', x2.toString())
+       targetToken = new BN(targetToken.plus(params.x1.times(params.y1)).div(params.x1.plus(params.x2)).toFixed(0))
+       return targetToken.minus(params.y1)
        }
 
-       return targetToken.minus(y1)
-       }
+    _getFormulaInputs(buy) {
+        //Buy is using parameters coming from another direction than sell. So whatever is y1 will be y2 in sell and so on. 
+        // Sell formula is also using inverted target Price. price = 1/price
+            let y1 = new BN(this.token1Balance)
+            let y2 = new BN(this.token2Balance)
+            let x1 = new BN(this.exchange1WeiBalance)
+            let x2 = new BN(this.exchange2WeiBalance)
+        if(buy) {
+            return new Object({x1:x1,x2:x2,y1:y1,y2:y2})
+        }
+        else {
+            return new Object({x1:x2,x2:x1,y1:y2,y2:y1})
+        }
+
+    }   
 
 }
 

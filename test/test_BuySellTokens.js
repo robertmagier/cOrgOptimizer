@@ -70,7 +70,7 @@ describe('C-Org Test Deployer', async function(done) {
 
         it('Sell Tokens', async function () {
             let result = await optimizer.optimizeSellTransaction('14102237051')
-            console.log('Target Fair:', result.toString())
+            console.log('Target Fair:', result.uniswap.toString(), '### ',result.dat.toString())
 
             let tokensToSell = result.uniswap.toString()
             console.log('Tokens to Sell: ', tokensToSell)

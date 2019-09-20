@@ -23,17 +23,18 @@ class CorgOptimizer {
 
         let fairPrice = await this.fairProxy.calculateFairBuyPrice() //returns price in DAI/FAIR
         let uniswapPrice = await this.uniswapPair.getPrices() 
-        let targetPrice = new BN(1).div(fairPrice) //Price in FAIR/DAI as expected in formula. 
         let uniswapAmount = 0
         let datAmount = 0
         
-        if(targetPrice.gt(uniswapPrice[2])) {
-            // console.log('Buying only from DAT')
+        fairPrice = new BN(fairPrice)
+        console.log('Buy Fair Price:', fairPrice.toString())
+        if(fairPrice.lt(uniswapPrice[2])) {
+            console.log('Buying only from DAT')
             uniswapAmount = 0
             datAmount = daiAmount
         } else {
-            // console.log('Buying from Uniswap First and rest from DAT')
-            let targetToken = await this.uniswapPair.getUniswapTargetToken(targetPrice)
+            console.log('Buying from Uniswap First and rest from DAT')
+            let targetToken = await this.uniswapPair.getUniswapTargetToken(true,fairPrice)
             // console.log('Target Token:', targetToken.toFormat(0))
             if(targetToken.gte(daiAmount)) {
                 // console.log('Buying everything from Uniswap')
@@ -48,11 +49,9 @@ class CorgOptimizer {
             }
         }
         
+        uniswapAmount = new BN(uniswapAmount)
+        datAmount = new BN(datAmount)
 
-        // console.log('Optimize Buy Transaction')
-        // console.log('Fair Price: ', fairPrice.toString())
-        // console.log('Uniswap Total Price: ', uniswapPrice[2].toString())
-        // console.log('Target Price: ', targetPrice.toString(),fairPrice.toString(), 'DAI/FAIR')
         return new Object({uniswap:uniswapAmount,dat:datAmount})
 
     }
@@ -75,9 +74,10 @@ class CorgOptimizer {
         }
         else {
             // console.log('Sell to Uniswap First and rest to DAT')
-            let targetDai = await this.uniswapPair.getUniswapTargetToken(targetPrice)
-            let simulatedPrices = await this.uniswapPair.simulatePrices(targetDai)
-            let targetToken = simulatedPrices[3].times('-1')
+            let targetDai = await this.uniswapPair.getUniswapTargetToken(false,fairPrice)
+            // let simulatedPrices = await this.uniswapPair.simulatePrices(targetDai)
+            // let targetToken = simulatedPrices[3].times('-1')
+            let targetToken = targetDai
 
             if(targetToken.lt(fairAmount)){
                 uniswapAmount = targetToken
