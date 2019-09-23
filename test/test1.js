@@ -4,9 +4,9 @@ var chaiAsPromised = require('chai-as-promised')
 chai.use(chaiAsPromised)
 expect = chai.expect
 
-const CorgTestDeployer = require('./helpers/corgTestDeployer')
-const UniswapTestDeployer = require('./helpers/uniswapTestDeployer')
-const DaiTestDeployer = require('./helpers/daiTestDeployer.js')
+const CorgTestDeployer = require('../src/helpers/corgTestDeployer')
+const UniswapTestDeployer = require('../src/helpers/uniswapTestDeployer')
+const DaiTestDeployer = require('../src/helpers/daiTestDeployer.js')
 const UniswapPair = require('../src/UniswapPair.js')
 const BN = require('bignumber.js')
 
@@ -129,23 +129,17 @@ describe('C-Org Test Deployer', async function(done) {
             uniswapPair = new UniswapPair(web3_local,daiExchange.address,fairExchange.address)
             await uniswapPair.initialize()
             let prices = await uniswapPair.getPrices()
-            console.log('Dai Price:', prices[0].toString())
-            console.log('Fair Price:', prices[1].toString())
-            console.log('Total Price:', prices[2].toString())
         })
 
-        it('Should be possible to calculate Fair Price', async function(){
+        it('Should be possible to calculate Fair Price 1', async function(){
             fairBroker = new FairBroker(web3_local,corg.datAddress)
             await fairBroker.initialize()
             let price = await fairBroker.calculateFairBuyPrice()
-
-            console.log('Fair Price:', price.toString())
             let uniswapPrices = await uniswapPair.getPrices()
-            console.log('Uniswap Total Price: ',uniswapPrices[2].toString())
-            price = new BN(1).div(price)
-            targetToken = await uniswapPair.getUniswapTargetToken(price.toString())
-            console.log('Target Token:', targetToken.toString())
-           
+
+            let ifBuy = true
+            targetToken = await uniswapPair.getUniswapTargetToken(ifBuy,price.toString())
+            
             await expect(dai.mint(uniswapDaiBuyer,targetToken.integerValue().toString())).to.be.eventually.fulfilled
 
 
@@ -175,21 +169,17 @@ describe('C-Org Test Deployer', async function(done) {
             simulatedPrices = await uniswapPair.simulatePrices(targetToken.integerValue().toString())
             await daiExchange.tokenToTokenSwapInput(targetToken.integerValue().toString(),1,1,current_block.timestamp + 300,corg.tokenAddress,{from:uniswapDaiBuyer})
             let balance = await corg.balanceOf(uniswapDaiBuyer)
-            expect(balance.toString()).to.be.equal('98')
+            expect(balance.toString()).to.be.equal('2631257191')
         })
         
-        it('Should be possible to calculate Fair Price', async function(){
+        it('Should be possible to calculate Fair Price 2', async function(){
             let price = await fairBroker.calculateFairBuyPrice()
-            console.log('Fair Price:', price.toString())
 
             let uniswapPrices = await uniswapPair.getPrices()
-            console.log('Uniswap Total Price:    ',uniswapPrices[2].toString())
             let simulated = simulatedPrices[2]
-            console.log('Simulated Uniswap Price:',simulated.toString())
-
-            price = new BN(1).div(price)
-            let targetToken = await uniswapPair.getUniswapTargetToken(price.toString())
-            console.log('Target Token:', targetToken.toString())
+            let ifBuy = true
+            // price = new BN(1).div(price)
+            let targetToken = await uniswapPair.getUniswapTargetToken(ifBuy,price.toString())
         })
 
    

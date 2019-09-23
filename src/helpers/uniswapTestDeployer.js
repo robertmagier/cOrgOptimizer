@@ -26,7 +26,6 @@ class UniswapTestDeployer {
     async createExchange(ownerAccount,tokenAddress)
     {
         let tx = await this.uniswap.createExchange(tokenAddress, { from: ownerAccount });
-        console.log('Exchange address: ',tx.logs[0].args.exchange)
         const exchange = await protocols.uniswap.getExchange(
             this.web3,
             tx.logs[0].args.exchange

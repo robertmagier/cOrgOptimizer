@@ -81,17 +81,13 @@ class UniswapPair {
         let fee = 997
         let inputAmount = new BN(token1Amount)
         let input_amount_with_fee = inputAmount.times(fee)
-        // console.log('Token#1 Input Amount with Fee:', input_amount_with_fee.toString())
         
         let outputReserve_Token1 = new BN(this.exchange1WeiBalance)
         let numerator = input_amount_with_fee.times(outputReserve_Token1)
-        // console.log('Numerator Token#1:', numerator.toString())
 
         let inputReserve_Token1 = new BN(this.token1Balance)
         let denominator = inputReserve_Token1.times(1000).plus(input_amount_with_fee)
-        // console.log('Denominator: ', denominator.toString())
         let outputAmount_Token1 = new BN(numerator.div(denominator).toFixed(0))
-        // console.log('Output Amount Token #1:', outputAmount_Token1.toString())
 
         let token1Balance_end = inputReserve_Token1.plus(inputAmount)
         let wei1Balance_end = outputReserve_Token1.minus(outputAmount_Token1)
@@ -102,16 +98,12 @@ class UniswapPair {
         let inputAmount_Token2 = outputAmount_Token1
 
         input_amount_with_fee = inputAmount_Token2.times(fee)
-        // console.log('Token#2 Input Amount with Fee:', input_amount_with_fee.toString())
 
         numerator = input_amount_with_fee.times(outputReserve_Token2)
-        // console.log('Numerator Token#2:', numerator.toString())
         denominator = inputReserve_Token2.times(1000).plus(input_amount_with_fee)
-        // console.log('Denominator Token#2:', denominator.toString())
 
 
         let outputAmount_Token2 = new BN(numerator.div(denominator).toFixed(0))
-        // console.log('Output Amount Token#2:', outputAmount_Token2.toFormat())
 
         let token2Balance_end = outputReserve_Token2.minus(outputAmount_Token2)
         let wei2Balance_end = inputReserve_Token2.plus(inputAmount_Token2)
@@ -137,15 +129,16 @@ class UniswapPair {
 
         let params = this._getFormulaInputs(ifBuy)
         let targetToken = new BN(0)
-       
        // target Wei = (sqrt((x1*y1* x2 *y2)/pm) + (x1 * y1))/(x1+x2)
        
        let mul_x1y1_x2_y2 = new BN(params.x1.times(params.y1).times(params.x2.times(params.y2)).toFixed(0))
        targetToken = new BN(mul_x1y1_x2_y2.div(pm).toFixed(0))
        targetToken = new BN(targetToken.sqrt().toFixed(0))
        targetToken = new BN(targetToken.plus(params.x1.times(params.y1)).div(params.x1.plus(params.x2)).toFixed(0))
+           
        return targetToken.minus(params.y1)
-       }
+
+    }
 
     _getFormulaInputs(buy) {
         //Buy is using parameters coming from another direction than sell. So whatever is y1 will be y2 in sell and so on. 

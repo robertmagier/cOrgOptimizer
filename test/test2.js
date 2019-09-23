@@ -6,7 +6,6 @@ expect = chai.expect
 
 const BN = require('bignumber.js')
 
-const TestDeployer = require('./helpers/testDeployer.js')
 const FairBroker = require('../src/FairProxy.js')
 const UniswapPair = require('../src/UniswapPair.js')
 
@@ -28,49 +27,40 @@ describe('C-Org Test Deployer', async function(done) {
     this.timeout(5000)
     before(async function (){
 
-        testDeployer = new TestDeployer(web3_local)
-        await testDeployer.prepareTest("2000000000000","1000000000000000000000","1000000000000","1000000000000","10000000000","10000000000")
+        optimizer = new Optimizer(web3_local)
+        await optimizer.prepareTest("2000000000000","1000000000000000000000","1000000000000","1000000000000","10000000000","10000000000")
+
     })
 
         it('Verify if environment is correctly prepared.', async function() {
-            await testDeployer.verify()
+            await optimizer.testDeployer.verify()
         });
 
         it('Calculate Fair Price', async function() {
 
-            fairBroker = new FairBroker(web3_local,testDeployer.corg.datAddress)
+            fairBroker = new FairBroker(web3_local,optimizer.DATAddress)
             await fairBroker.initialize()
             let price = await fairBroker.calculateFairBuyPrice()
-            console.log('Fair Price:', price.toString())
-            targetPrice = new BN(1).div(price)
+            targetPrice = price
         });
 
         it('Calculate Uniswap Price', async function() {
 
-            uniswapPair = new UniswapPair(web3_local,testDeployer.daiExchange.address,testDeployer.fairExchange.address)
+            uniswapPair = new UniswapPair(web3_local,optimizer.DAIExchangeAddress,optimizer.FAIRExchangeAddress)
             await uniswapPair.initialize()
             let prices = await uniswapPair.getPrices()
-            console.log('Dai Price:', prices[0].toString())
-            console.log('Fair Price:', prices[1].toString())
-            console.log('Total Price:', prices[2].toString())
         });
 
         it('Calculate number of tokens to to buy from exchange to get to current FAIR Price.',async function () {
-            targetToken = await uniswapPair.getUniswapTargetToken(targetPrice)
-            console.log('Target Token: ', targetToken.toFormat(0))
+            let ifBuy = true
+            targetToken = await uniswapPair.getUniswapTargetToken(ifBuy,targetPrice)
         })
 
         it('Execute Swap and check differnce.', async function(){
             let target = targetToken.integerValue().toString()
             let simulatedPrices = await uniswapPair.simulatePrices(target)
-            await testDeployer.buyFairTokens(target)
+            await optimizer.testDeployer.buyFairTokens(target)
             let prices = await uniswapPair.getPrices()
-            console.log('Dai Price:', prices[0].toString())
-            console.log('Fair Price:', prices[1].toString())
-            console.log('Total Price:          ', prices[2].toString())   
-            console.log('DAI Simulated Price:', simulatedPrices[0].toString())   
-            console.log('Fair Simulated Price:', simulatedPrices[1].toString())   
-            console.log('Total Simulated Price:', simulatedPrices[2].toString())   
         })
 
 

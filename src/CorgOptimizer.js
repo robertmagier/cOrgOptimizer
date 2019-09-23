@@ -1,49 +1,69 @@
 
 const UniswapPair = require('./UniswapPair')
 const FairProxy = require('./FairProxy')
+const TestDeployer = require('./helpers/testDeployer.js')
 const BN = require('bignumber.js')
 
 class CorgOptimizer {
 
-    constructor(web3,exchange1Address, exchange2Address, datAddress) {
+    constructor(web3) {
         this.web3 = web3
-        this.uniswapPair = new UniswapPair(web3,exchange1Address,exchange2Address)
-        this.fairProxy = new FairProxy(web3,datAddress)
         this.ready = false
     }
 
-    async _init() {
+    async init(DAIExchangeAddress, FAIRExchangeAddress, DATAddress) {
+
+
+        this._init(DAIExchangeAddress, FAIRExchangeAddress, DATAddress)
+
+    }
+
+    async prepareTest(daiInitialSupply, fairInitialWei, uniswapDaiTokenAmount, uniswapDaiWeiAmount, uniswapFairTokenAmount, uniswapFairWeiAmount ) {
+        this.testDeployer = new TestDeployer(this.web3)
+        await this.testDeployer.prepareTest(daiInitialSupply, fairInitialWei, uniswapDaiTokenAmount, uniswapDaiWeiAmount, uniswapFairTokenAmount, uniswapFairWeiAmount )
+        await this._init(this.testDeployer.daiExchange.address, this.testDeployer.fairExchange.address, this.testDeployer.corg.datAddress)
+    }
+
+    async _init(DAIExchangeAddress, FAIRExchangeAddress, DATAddress) {
+                
+        this.DAIExchangeAddress = DAIExchangeAddress
+        this.FAIRExchangeAddress = FAIRExchangeAddress
+        this.DATAddress = DATAddress
+
+        console.log('Uniswap Dai Exchange Address :  ',this.DAIExchangeAddress)
+        console.log('Uniswap Fair Exchange Address:  ',this.FAIRExchangeAddress)
+        console.log('DAT Address:                    ',this.DATAddress)
+
+
+        this.uniswapPair = new UniswapPair(this.web3,DAIExchangeAddress,FAIRExchangeAddress)
+        this.fairProxy = new FairProxy(this.web3,DATAddress)
         await this.uniswapPair.initialize()
         await this.fairProxy.initialize()
         this.ready = true
     }
 
-    async optimizeBuyTransaction(daiAmount) {
-        await this._init()
+    async optimizeBuyTransaction(daiAmount) {3
 
+        if(this.ready == false) {
+            throw('Call init(exchange1Address, exchange2Address, datAddress) function first or prepareTest to initialize this object.')
+        }
         let fairPrice = await this.fairProxy.calculateFairBuyPrice() //returns price in DAI/FAIR
         let uniswapPrice = await this.uniswapPair.getPrices() 
         let uniswapAmount = 0
         let datAmount = 0
         
         fairPrice = new BN(fairPrice)
-        console.log('Buy Fair Price:', fairPrice.toString())
         if(fairPrice.lt(uniswapPrice[2])) {
-            console.log('Buying only from DAT')
             uniswapAmount = 0
             datAmount = daiAmount
         } else {
-            console.log('Buying from Uniswap First and rest from DAT')
             let targetToken = await this.uniswapPair.getUniswapTargetToken(true,fairPrice)
-            // console.log('Target Token:', targetToken.toFormat(0))
             if(targetToken.gte(daiAmount)) {
-                // console.log('Buying everything from Uniswap')
                 uniswapAmount = daiAmount 
                 datAmount = 0
 
             } else 
             {
-                // console.log('Buying first from Uniswap and then rest from DAT')
                 uniswapAmount = targetToken
                 datAmount = new BN(daiAmount).minus(targetToken)
             }
@@ -58,25 +78,22 @@ class CorgOptimizer {
 
     async optimizeSellTransaction(fairAmount) {
 
-        await this._init()
+        if(this.ready == false) {
+            throw('Call init(exchange1Address, exchange2Address, datAddress) function first or prepareTest to initialize this object.')
+        }
 
         let fairPrice = await this.fairProxy.calculateFairSellPrice() //returns price in DAI/FAIR
         let uniswapPrice = await this.uniswapPair.getPrices() 
         let targetPrice = new BN(1).div(fairPrice) //Price should be in FAIR/DAI as expected in formula. 
-        // console.log('***Sell Prices:',targetPrice.toString(),'FAIR/DAI',fairPrice.toString(), 'DAI/FAIR', uniswapPrice[2].toString(),'DAI/FAIR')
         let uniswapAmount = 0
         let datAmount = 0
 
         if(fairPrice.gt(uniswapPrice[2])) {
-            // console.log('Sell everything to DAT')
             datAmount = fairAmount
             uniswapAmount = 0
         }
         else {
-            // console.log('Sell to Uniswap First and rest to DAT')
             let targetDai = await this.uniswapPair.getUniswapTargetToken(false,fairPrice)
-            // let simulatedPrices = await this.uniswapPair.simulatePrices(targetDai)
-            // let targetToken = simulatedPrices[3].times('-1')
             let targetToken = targetDai
 
             if(targetToken.lt(fairAmount)){

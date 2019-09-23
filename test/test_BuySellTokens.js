@@ -6,7 +6,6 @@ expect = chai.expect
 
 const BN = require('bignumber.js')
 
-const TestDeployer = require('./helpers/testDeployer.js')
 const FairBroker = require('../src/FairProxy.js')
 const UniswapPair = require('../src/UniswapPair.js')
 
@@ -28,56 +27,55 @@ describe('C-Org Test Deployer', async function(done) {
     this.timeout(5000)
     before(async function (){
 
-        testDeployer = new TestDeployer(web3_local)
-        await testDeployer.prepareTest("2000000000000","1000000000000000000000","1000000000000","1000000000000","10000000000","10000000000")
+        optimizer = new Optimizer(web3_local)
+        await optimizer.prepareTest("2000000000000","1000000000000000000000","1000000000000","1000000000000","10000000000","10000000000")
+
     })
 
         it('Verify if environment is correctly prepared.', async function() {
-            await testDeployer.verify()
+            await optimizer.testDeployer.verify()
         });
 
         it('Calculate Fair Price', async function() {
 
-            console.log('Dai Exchange:  ',testDeployer.daiExchange.address)
-            console.log('Fair Exchange: ',testDeployer.fairExchange.address)
-            console.log('DAT:           ',testDeployer.corg.datAddress)
-            
-
-            optimizer = new Optimizer(web3_local,testDeployer.daiExchange.address,testDeployer.fairExchange.address,testDeployer.corg.datAddress)
             let result = await optimizer.optimizeBuyTransaction('11083071190')
-            console.log('Result of Optimization: ', result)
             targetToken = result.uniswap
             let fairSellPrice = await optimizer.fairProxy.calculateFairSellPrice()
             let fairBuyPrice = await optimizer.fairProxy.calculateFairBuyPrice()
-            console.log('Fair Sell Price: ', fairSellPrice.toString(), ' DAI/FAIR')
-            console.log('Fair Buy Price: ', fairBuyPrice.toString(), ' DAI/FAIR')
-    
+            expect (fairSellPrice.toString()).to.be.equal('0.3')
+            expect (fairBuyPrice.toString()).to.be.equal('4.491814778015')
+            targetPrice = fairBuyPrice
         });
 
         it('Buy FAIR Tokens using DAI.', async function () {
             let target = targetToken.integerValue().toString()
-            console.log('Target Token: ', new BN(target).toFormat())
-            uniswapPair = new UniswapPair(web3_local,testDeployer.daiExchange.address,testDeployer.fairExchange.address)
+            uniswapPair = new UniswapPair(web3_local,optimizer.DAIExchangeAddress,optimizer.FAIRExchangeAddress)
             await uniswapPair.initialize()
             let simulatedPrices = await uniswapPair.simulatePrices(target)
-            console.log('Simulated Total Price: ', simulatedPrices[2].toString())
 
-            await testDeployer.buyFairTokens(target)
+            await optimizer.testDeployer.buyFairTokens(target)
             let prices = await optimizer.uniswapPair.getPrices()
-            console.log('Uniswap  Price: ', prices[2].toString())
+            let finalPrice = prices[2]
 
+            let bias = targetPrice.div(finalPrice).times(100).minus(100)
+            expect(bias.abs().lte('0.5'),'Target Price Must be less than 0.5% from reached price. It is ' + bias.toString() ).to.be.true
+            
         })
 
         it('Sell Tokens', async function () {
-            let result = await optimizer.optimizeSellTransaction('14102237051')
-            console.log('Target Fair:', result.uniswap.toString(), '### ',result.dat.toString())
+            let fairSellPrice = await optimizer.fairProxy.calculateFairSellPrice()
+            targetPrice = fairSellPrice
 
+            let result = await optimizer.optimizeSellTransaction('14102237051')
             let tokensToSell = result.uniswap.toString()
-            console.log('Tokens to Sell: ', tokensToSell)
-            
-            await testDeployer.sellFairTokens(tokensToSell)
+            await optimizer.testDeployer.sellFairTokens(tokensToSell)
             let prices = await optimizer.uniswapPair.getPrices()
-            console.log('Uniswap  Price: ', prices[2].toString())
+
+            let finalPrice = prices[2]
+            let bias = targetPrice.div(finalPrice).times(100).minus(100)
+            expect(bias.abs().lte('0.5'),'Target Price Must be less than 0.5% from reached price. It is ' + bias.toString() ).to.be.true
+
+
         })
 
    

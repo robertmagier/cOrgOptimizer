@@ -121,7 +121,6 @@ class TestDeployer {
         let daiBalance = await this.dai.balanceOf(this.uniswapDaiBuyer)
         daiBalance = new BN(daiBalance)
         expect(daiBalance.gt(daiAmount),"Not enought tokens to execute swap transaction.").to.be.true
-        console.log('Dai Balance: ', new BN(daiBalance).toFormat())
         await this.dai.approve(this.uniswapDaiBuyer,this.daiExchange.address,daiAmount)
 
         let current_block = await this.web3.eth.getBlock(await this.web3.eth.getBlockNumber());
@@ -138,7 +137,6 @@ class TestDeployer {
         let fairBalance = await this.corg.balanceOf(this.fairBuyer)
         fairBalance = new BN(fairBalance)
         expect(fairBalance.gt(fairAmount),"Not enought tokens to execute sell transaction.").to.be.true
-        console.log('Fair Balance: ', new BN(fairBalance).toFormat())
         await this.corg.approve(this.fairBuyer,this.fairExchange.address,fairAmount)
 
         let current_block = await this.web3.eth.getBlock(await this.web3.eth.getBlockNumber());
