@@ -16,7 +16,7 @@ const Web3 = require('web3')
 const promisify = require('../src/promisify')
 
 const provider_wss = 'wss://mainnet.infura.io/ws/v3/1083bd1be8444957a770056562d20ded'
-const provider_http = 'http://localhost:8545'
+const provider_http = 'http://127.0.0.1:8545'
 
 
 var web3 = new Web3(new Web3.providers.WebsocketProvider(provider_wss))
