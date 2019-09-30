@@ -1,9 +1,9 @@
 
-var exchangeABI = require('../abi/uniswapABI')
+var exchangeABI = require('../abi/uniswap_exchange.json').abi
 const BN = require('bignumber.js')
 const promisify = require('./promisify')
 const TokenBroker = require('./TokenBroker')
-
+const signAndSend = require('./helpers/txSender')
 
 
 
@@ -32,6 +32,21 @@ class UniswapPair {
         this.exchange2 = new this.web3.eth.Contract(exchangeABI,this.exchange2Address)
     }
 
+    async getFactoryAddress() {
+         let exchange1Factory = await promisify(cb=>this.exchange1.methods.factoryAddress().call(cb))
+         let exchange2Factory = await promisify(cb=>this.exchange2.methods.factoryAddress().call(cb))
+         return new Array([exchange1Factory,exchange2Factory])
+
+
+    }
+
+    // def addLiquidity(min_liquidity: uint256, max_tokens: uint256, deadline: timestamp) -> uint256:
+    addLiquidityTxData(min_liquidity,max_tokens,deadline) {
+        let txData = this.exchange1.methods.addLiquidity(min_liquidity,max_tokens,deadline).encodeABI()
+        return txData
+    }
+
+
     async _readTokenAddress() {
         this.token1Address =   await promisify(cb=>this.exchange1.methods.tokenAddress().call(cb))
         this.token2Address =   await promisify(cb=>this.exchange2.methods.tokenAddress().call(cb))
@@ -49,6 +64,7 @@ class UniswapPair {
         await this._readExchangeWeiBalances()
     }
 
+    
     async _readTokenBalances() {
         this.token1Balance = await this.tokenBroker.readTokenBalance(this.token1Address,this.exchange1Address)
         this.token2Balance = await this.tokenBroker.readTokenBalance(this.token2Address,this.exchange2Address)
@@ -71,9 +87,22 @@ class UniswapPair {
         let exchange2Price = y2.div(x2)
         let totalPrice = exchange1Price.div(exchange2Price)
         return [exchange1Price, exchange2Price, totalPrice]
+    }
 
+    async getExchange1Price() {
+        let prices = await this.getPrices()
+        return prices[0]
+    }
+    async getExchange2Price() {
+        let prices = await this.getPrices()
+        return prices[1]
 
     }
+    async getTotalPrice() {
+        let prices = await this.getPrices()
+        return prices[2]
+    }
+
 
     async simulatePrices(token1Amount) {
         await this._syncData()

@@ -28,8 +28,14 @@ describe('C-Org Test Deployer', async function(done) {
     before(async function (){
 
         optimizer = new Optimizer(web3_local)
-        await optimizer.prepareTest("2000000000000","1000000000000000000000","1000000000000","1000000000000","10000000000","10000000000")
-
+        let environment = await optimizer.prepareTest("2000000000000","1000000000000000000000","1000000000000","1000000000000","10000000000","10000000000")
+        console.log()
+        console.log('      Uniswap Fair Exchange Address:   ', environment.FAIRExchange)
+        console.log('      Uniswap DAI Exchange Address:    ', environment.DAIExchange)
+        console.log('      DAT Address:                     ', environment.DAT)
+        console.log('      FAIR Token Address:              ', environment.FAIRToken)
+        console.log('      DAI Token Address:               ', environment.DAIToken)
+        console.log()
     })
 
         it('Verify if environment is correctly prepared.', async function() {

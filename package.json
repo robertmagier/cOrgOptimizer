@@ -1,21 +1,23 @@
 {
-  "name": "corgoptimizer",
-  "version": "1.0.5",
+  "name": "@fairmint/c-org-optimizer",
+  "version": "1.0.7",
   "description": "",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/robertmagier/cOrgOptimizer.git"
+    "url": "git+https://github.com/Fairmint/c-org-optimizer.git"
   },
   "scripts": {
     "test": "mocha --exit"
   },
-  "author": "",
+  "author": "Robert Magier",
   "license": "ISC",
   "dependencies": {
     "bignumber.js": "^9.0.0",
-    "c-org-abi": "^1.0.1",
+    "c-org-abi": "^1.1.1",
     "chai": "^4.2.0",
+    "ethereumjs-tx": "^2.1.1",
+    "hardlydifficult-ethereum-contracts": "^0.5.1",
     "hardlydifficult-test-helpers": "^0.3.0",
     "mocha": "^6.2.0",
     "web3": "^1.2.1"

@@ -1,36 +1,24 @@
 const BN = require('bignumber.js')
-const datABI = require('../abi/datABI.js')
-const fairABI = require('../abi/fairABI.js')
+
 const promisify = require('./promisify')
+const abi = require('c-org-abi/abi.json')
 
 
-
-
-class FairProxy {
+class DATProxy {
     constructor(web3,datAddress) {
         this.web3 = web3
         this.datAddress = datAddress
     }
 
-    _getDatContract() {
-        
-        this.dat =  new this.web3.eth.Contract(datABI,this.datAddress)
-    }
-
+    
     async initialize() {
-        await this._getDatContract()
-        await this._getFairContract()
-
-
+        this.dat =  await new this.web3.eth.Contract(abi.dat,this.datAddress)
     }
-    async _getFairContract() {
-       this.fairAddress =  await promisify(cb=>this.dat.methods.fairAddress().call(cb))
-       this.fair = new this.web3.eth.Contract(fairABI,this.fairAddress)
-    }
+
 
     async getFairTotalSoldTokens() {
-        let totalSupply = await promisify(cb=>this.fair.methods.totalSupply().call(cb))
-        let burnedSupply = await promisify(cb=>this.fair.methods.burnedSupply().call(cb))
+        let totalSupply = await promisify(cb=>this.dat.methods.totalSupply().call(cb))
+        let burnedSupply = await promisify(cb=>this.dat.methods.burnedSupply().call(cb))
         return {available:totalSupply, burned: burnedSupply}
     }
     
@@ -60,17 +48,27 @@ class FairProxy {
     }
 
     async allowance(from,spender) {
-        let amount = await this.fair.methods.allowance(from,spender).call(cb)
+        let amount = await promisify(cb => this.dat.methods.allowance(from,spender).call(cb))
         return amount
     }
 
+    async balanceOf(account) {
+        let balance = await promisify(cb=>this.dat.methods.balanceOf(account).call(cb))
+        return new BN(balance.toString())
+    }
+
     async approve(fromAccount,spender,amount) {
-        amount = await this.fair.methods.approve(spender,amount).send({from:fromAccount})
+        amount = await this.dat.methods.approve(spender,amount).send({from:fromAccount})
         return amount
+    }
+
+    approveTxData(fromAccount,spender,amount) {
+        let data = this.dat.methods.approve(spender,amount).encodeABI()
+        return data
     }
 
     
 
 }
 
-module.exports = FairProxy
+module.exports = DATProxy

@@ -1,4 +1,4 @@
-const ERC20 = require('../abi/ERC20.json')
+const abi = require('c-org-abi/abi.json')
 const promisify = require('./promisify')
 
 class TokenBroker {
@@ -8,7 +8,7 @@ class TokenBroker {
 
     async readTokenBalance(tokenAddress,ownerAddress) {
         // console.log('token address: ', tokenAddress, 'ownerAddress:', ownerAddress)
-        let tokenContract = new this.web3.eth.Contract(ERC20.abi,tokenAddress)
+        let tokenContract = new this.web3.eth.Contract(abi.erc20,tokenAddress)
         let balance = await promisify(cb=>tokenContract.methods.balanceOf(ownerAddress).call(cb))
         return balance
     }

@@ -1,4 +1,4 @@
-const { tokens, protocols } = require("hardlydifficult-test-helpers");
+const { tokens, protocols } = require("hardlydifficult-ethereum-contracts");
 const promisify = require('../../src/promisify')
 const CorgTestDeployer = require('./corgTestDeployer')
 const DaiTestDeployer = require('./daiTestDeployer')

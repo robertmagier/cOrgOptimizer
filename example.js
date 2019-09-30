@@ -1,4 +1,4 @@
-const Optimizer = require('corgoptimizer')
+const Optimizer = require('c-org-optimizer')
 const Web3 = require('web3')
 const provider_http = 'http://localhost:8545'
 
@@ -11,7 +11,8 @@ const DAT = '0x93264ff8642d0F2C21BCC78aE367B9eC6137addA'
 
 async function main()
 {
-    optimizer = new Optimizer(web3,daiExchange,fairExchange,DAT)
+    optimizer = new Optimizer(web3)
+    await optimizer.init(daiExchange,fairExchange,DAT)
     let result = await optimizer.optimizeBuyTransaction('11083071190')
     console.log('Result of Buy Optimization. ')
     console.log('Amount to buy on Uniswap:   ', result.uniswap.toString())

@@ -1,4 +1,4 @@
-const { tokens, protocols } = require("hardlydifficult-test-helpers");
+const { tokens, protocols } = require("hardlydifficult-ethereum-contracts");
 
 class DaiTestDeployer{
     constructor(web3)

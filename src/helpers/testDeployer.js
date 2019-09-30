@@ -87,6 +87,15 @@ class TestDeployer {
         await this.daiExchange.addLiquidity(uniswapDaiWeiAmount,uniswapDaiTokenAmount,current_block.timestamp + 300,{from:this.uniswapDaiBuyer,value:uniswapDaiWeiAmount})
 
         this.prepared = true
+        let result = new Object({
+            FAIRExchange: this.fairExchange.address,
+            DAIExchange: this.daiExchange.address,
+            DAT: this.corg.datAddress,
+            FAIRToken: this.corg.tokenAddress,
+            DAIToken: this.dai.tokenAddress
+        })
+
+        return result
 
     }
 
