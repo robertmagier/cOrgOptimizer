@@ -5,6 +5,7 @@
 version: 2
 jobs:
   build:
+    context: docker-hub-credentials
     docker:
       # specify the version you desire here
       - image: circleci/node:10.16.0
@@ -29,6 +30,7 @@ jobs:
             #- v1-dependencies-
 
       - run: npm install
+     # - run: ganache-cli -e 10000000000 -a 100
       - run: npm test
 
 #      - save_cache:
