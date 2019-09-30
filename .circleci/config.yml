@@ -30,7 +30,7 @@ jobs:
             #- v1-dependencies-
 
       - run: npm install
-      - run: ganache-cli -e 10000000000 -a 100
+      #- run: ganache-cli -e 10000000000 -a 100
       - run: npm test
 
 #      - save_cache:
