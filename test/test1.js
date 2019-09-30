@@ -15,11 +15,9 @@ const FairBroker = require('../src/FairProxy.js')
 const Web3 = require('web3')
 const promisify = require('../src/promisify')
 
-const provider_wss = 'wss://mainnet.infura.io/ws/v3/1083bd1be8444957a770056562d20ded'
 const provider_http = 'http://127.0.0.1:8545'
 
 
-var web3 = new Web3(new Web3.providers.WebsocketProvider(provider_wss))
 var web3_local = new Web3(new Web3.providers.HttpProvider(provider_http))
 
 var corg = new CorgTestDeployer(web3_local)
@@ -52,6 +50,7 @@ describe('C-Org Test Deployer', async function(done) {
         await uniswap.deploy(uniswapOwner)
         await dai.deploy(daiOwner)
         fairExchange  = await uniswap.createExchange(uniswapOwner,corg.tokenAddress)
+        await expect(corg.approveBuyer(fairExchange.address)).to.be.eventually.fulfilled
         daiExchange  = await uniswap.createExchange(uniswapOwner,dai.tokenAddress)
         
     })
@@ -106,8 +105,7 @@ describe('C-Org Test Deployer', async function(done) {
             expect(balance.toString()).to.be.equal('0')
             let current_block = await web3_local.eth.getBlock(await web3_local.eth.getBlockNumber());
 
-            await expect(fairExchange.addLiquidity(10000000000,10000000000,current_block.timestamp + 300,{from:fairBuyer,value:10000000000})).to.be.eventually.rejected
-            await expect(corg.approveBuyer(fairExchange.address))
+            // await expect(fairExchange.addLiquidity(10000000000,10000000000,current_block.timestamp + 300,{from:fairBuyer,value:10000000000})).to.be.eventually.rejected
             await expect(fairExchange.addLiquidity(10000000000,10000000000,current_block.timestamp + 300,{from:fairBuyer,value:10000000000})).to.be.eventually.fulfilled
 
             balance = await corg.balanceOf(fairExchange.address) 
