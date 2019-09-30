@@ -16,6 +16,7 @@
     "bignumber.js": "^9.0.0",
     "c-org-abi": "^1.1.1",
     "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "ethereumjs-tx": "^2.1.1",
     "hardlydifficult-ethereum-contracts": "^0.5.1",
     "hardlydifficult-test-helpers": "^0.3.0",
